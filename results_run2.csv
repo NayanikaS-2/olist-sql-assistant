@@ -1,0 +1,93 @@
+difficulty,question,status,generated_sql,passed
+easy,How many orders were delivered?,PASS,SELECT count(order_id) FROM orders WHERE order_status = 'delivered',True
+easy,How many unique customers (real people) are there?,PASS,SELECT count(DISTINCT customer_unique_id) FROM customers,True
+easy,What is the average review score?,PASS,SELECT AVG(review_score) FROM order_reviews,True
+easy,Which 5 states have the most unique customers? Show state and count.,PASS,"SELECT customer_state, COUNT(DISTINCT customer_unique_id) AS unique_customers_count FROM customers GROUP BY customer_state ORDER BY unique_customers_count DESC LIMIT 5",True
+medium,What is the total payment value for each payment type?,PASS,"SELECT payment_type, SUM(payment_value) AS total_payment_value FROM order_payments GROUP BY payment_type ORDER BY total_payment_value DESC",True
+medium,Which 5 sellers have the highest total revenue (sum of item price)? Show seller_id and revenue.,PASS,"SELECT t1.seller_id, sum(t1.price) AS revenue FROM order_items AS t1 GROUP BY t1.seller_id ORDER BY revenue DESC LIMIT 5",True
+hard,Which 5 product categories (English names) have the most items sold? Show category and item count.,PASS,"SELECT 
+    t.product_category_name_english, 
+    COUNT(i.order_item_id) AS item_count
+FROM order_items i
+JOIN products p ON i.product_id = p.product_id
+JOIN product_category_name_translation t ON p.product_category_name = t.product_category_name
+GROUP BY t.product_category_name_english
+ORDER BY item_count DESC
+LIMIT 5",True
+hard,Which customer state has the highest average review score? Show state and score.,PASS,"SELECT c.customer_state, AVG(r.review_score) AS score
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_reviews r ON o.order_id = r.order_id
+GROUP BY c.customer_state
+ORDER BY score DESC
+LIMIT 1",True
+medium,What percentage of delivered orders arrived after the estimated delivery date? Only count delivered orders that have a delivery date. Round to 2 decimals.,PASS,"SELECT 
+    ROUND(
+        100.0 * SUM(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(*), 
+        2
+    ) AS percentage_late
+FROM orders
+WHERE order_status = 'delivered' 
+  AND order_delivered_customer_date IS NOT NULL 
+  AND order_estimated_delivery_date IS NOT NULL",True
+medium,How many orders were placed in 2017?,PASS,SELECT count(order_id) FROM orders WHERE extract(year from order_purchase_timestamp) = 2017,True
+medium,How many orders contain more than one item?,PASS,SELECT count(*) FROM (SELECT order_id FROM order_items GROUP BY order_id HAVING count(order_item_id) > 1),True
+medium,How many orders have no review at all?,PASS,SELECT count(*) FROM orders WHERE order_id NOT IN (SELECT order_id FROM order_reviews),True
+medium,How many delivered orders were purchased on a weekend (Saturday or Sunday)?,PASS,"SELECT count(order_id) FROM orders WHERE order_status = 'delivered' AND dayofweek(order_purchase_timestamp) IN (0, 6)",True
+medium,Which seller has the most distinct orders? Show seller_id and the number of orders.,PASS,"SELECT t1.seller_id, COUNT(DISTINCT t1.order_id) AS order_count
+FROM order_items AS t1
+GROUP BY t1.seller_id
+ORDER BY order_count DESC
+LIMIT 1",True
+hard,Which 5 customer states have the highest average freight_value per item? Show state and average rounded to 2 decimals.,PASS,"SELECT 
+    c.customer_state,
+    ROUND(AVG(oi.freight_value), 2) AS avg_freight_value
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.customer_state
+ORDER BY avg_freight_value DESC
+LIMIT 5",True
+hard,"What is the average review score for late versus on-time deliveries? Only delivered orders with a delivery date. Show only two columns: a label that is exactly 'late' or 'on_time', and the average score rounded to 2 decimals.",PASS,"SELECT 
+    CASE 
+        WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 'late'
+        ELSE 'on_time'
+    END AS delivery_status,
+    ROUND(AVG(CAST(r.review_score AS DOUBLE)), 2) AS avg_review_score
+FROM orders o
+JOIN order_reviews r ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered'
+  AND o.order_delivered_customer_date IS NOT NULL
+  AND o.order_estimated_delivery_date IS NOT NULL
+GROUP BY 
+    CASE 
+        WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 'late'
+        ELSE 'on_time'
+    END",True
+hard,Which month (as text like 2017-11) had the highest revenue from delivered orders? Revenue is the sum of item price. Show month and revenue rounded to 2 decimals.,FAIL,"SELECT strftime(o.order_delivered_customer_date, '%Y-%m') AS month, ROUND(SUM(i.price), 2) AS revenue FROM orders o JOIN order_items i ON o.order_id = i.order_id WHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY revenue DESC LIMIT 1",False
+hard,How many real customers (customer_unique_id) placed more than one order?,PASS,SELECT COUNT(*) FROM (SELECT customer_unique_id FROM customers JOIN orders ON customers.customer_id = orders.customer_id GROUP BY customer_unique_id HAVING COUNT(orders.order_id) > 1) t,True
+hard,Which product category (English name) has the lowest average review score? Show category and average rounded to 2 decimals.,PASS,"SELECT 
+    t.product_category_name_english AS product_category_name,
+    ROUND(AVG(r.review_score), 2) AS avg_review_score
+FROM order_reviews r
+JOIN order_items i ON r.order_id = i.order_id
+JOIN products p ON i.product_id = p.product_id
+JOIN product_category_name_translation t ON p.product_category_name = t.product_category_name
+GROUP BY t.product_category_name_english
+ORDER BY avg_review_score ASC
+LIMIT 1",True
+hard,"For all orders, what are the top 3 customer states by revenue (sum of item price), and what percent of total revenue does each represent? Show state, revenue and percent, rounded to 2 decimals.",PASS,"SELECT 
+    c.customer_state AS state,
+    SUM(oi.price) AS revenue,
+    ROUND(SUM(oi.price) * 100.0 / SUM(SUM(oi.price)) OVER (), 2) AS percent
+FROM 
+    customers c
+JOIN 
+    orders o ON c.customer_id = o.customer_id
+JOIN 
+    order_items oi ON o.order_id = oi.order_id
+GROUP BY 
+    c.customer_state
+ORDER BY 
+    revenue DESC
+LIMIT 3",True

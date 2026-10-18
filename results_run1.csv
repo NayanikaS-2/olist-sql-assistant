@@ -1,0 +1,27 @@
+difficulty,question,status,generated_sql,passed
+easy,How many orders were delivered?,PASS,SELECT count(*) FROM orders WHERE order_status = 'delivered',True
+easy,How many unique customers (real people) are there?,PASS,SELECT count(DISTINCT customer_unique_id) FROM customers,True
+easy,What is the average review score?,PASS,SELECT avg(review_score) FROM order_reviews,True
+easy,Which 5 states have the most unique customers? Show state and count.,PASS,"SELECT customer_state, COUNT(DISTINCT customer_unique_id) AS unique_customers_count FROM customers GROUP BY customer_state ORDER BY unique_customers_count DESC LIMIT 5",True
+medium,What is the total payment value for each payment type?,PASS,"SELECT payment_type, SUM(payment_value) AS total_payment_value FROM order_payments GROUP BY payment_type ORDER BY total_payment_value DESC",True
+medium,Which 5 sellers have the highest total revenue (sum of item price)? Show seller_id and revenue.,PASS,"SELECT seller_id, SUM(price) AS revenue
+FROM order_items
+GROUP BY seller_id
+ORDER BY revenue DESC
+LIMIT 5",True
+hard,Which 5 product categories (English names) have the most items sold? Show category and item count.,PASS,"SELECT 
+    t.product_category_name_english AS category, 
+    COUNT(i.order_item_id) AS item_count
+FROM order_items i
+JOIN products p ON i.product_id = p.product_id
+JOIN product_category_name_translation t ON p.product_category_name = t.product_category_name
+GROUP BY t.product_category_name_english
+ORDER BY item_count DESC
+LIMIT 5",True
+hard,Which customer state has the highest average review score? Show state and score.,PASS,"SELECT c.customer_state, AVG(CAST(r.review_score AS DOUBLE)) AS score
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_reviews r ON o.order_id = r.order_id
+GROUP BY c.customer_state
+ORDER BY score DESC
+LIMIT 1",True
