@@ -156,5 +156,5 @@ Add 30 to 40 harder and ambiguous questions, repeat each setup 3 times, add exam
 
 
 
-Built by \[Your Name]. Tools: Python, DuckDB, Streamlit, Gemini API, pandas.
+Built by Nayanika S. Tools: Python, DuckDB, Streamlit, Gemini API, pandas.
 
