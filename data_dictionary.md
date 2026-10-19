@@ -136,3 +136,9 @@ order\_reviews.order\_id -> orders.order\_id
 
 products.product\_category\_name -> product\_category\_name\_translation.product\_category\_name
 
+
+
+\## Conventions
+
+\- When asked about orders or revenue "by month" or "per month" without saying which date, group by order\_purchase\_timestamp (the purchase date), not the delivery date.
+
